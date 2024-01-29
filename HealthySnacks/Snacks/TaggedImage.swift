@@ -15,4 +15,5 @@ class TaggedImage {
     
     var image: UIImage
     var tag: String = ""
+    var confidence: Float = 0.0
 }

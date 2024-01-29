@@ -37,8 +37,13 @@ private let reuseIdentifier = "Cell"
 class ViewController: UIViewController {
     
     var images: [TaggedImage] = []
+    var tags: [String] = []
     @IBOutlet var verticalStackView: UIStackView!
     var horizontalStackViews: [UIStackView] = []
+    
+    var currentTag = "All"
+    
+    var handlingImage: TaggedImage? = nil
     
     @IBOutlet var imageView: UIImageView!
     @IBOutlet var cameraButton: UIButton!
@@ -78,10 +83,19 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        loadImages()
     }
     
-    func addButton(image: UIImage) {
-        if images.count % 3 == 0 {
+    func loadImages() {
+        for (index, image) in images.enumerated() {
+            if currentTag == "All" || image.tag == currentTag {
+                addButton(image: image.image, buttonTag: index)
+            }
+        }
+    }
+    
+    func addButton(image: UIImage, buttonTag: Int) {
+        if horizontalStackViews.isEmpty || horizontalStackViews.last!.subviews.count >= 3 {
             let horizontalStackView = UIStackView()
             verticalStackView.addArrangedSubview(horizontalStackView)
             horizontalStackView.spacing = 3
@@ -98,6 +112,13 @@ class ViewController: UIViewController {
         button.heightAnchor.constraint(equalToConstant: buttonHeight).isActive = true
         button.imageView?.contentMode = .scaleAspectFill
         button.setImage(image, for: .normal)
+        button.tag = buttonTag
+        
+        button.addTarget(self, action: #selector(showDetail), for: .touchUpInside)
+    }
+    
+    @objc func showDetail(button: UIButton) {
+        performSegue(withIdentifier: "toDetail", sender: button)
     }
     
     @IBAction func takePicture() {
@@ -113,40 +134,17 @@ class ViewController: UIViewController {
         picker.delegate = self
         picker.sourceType = sourceType
         present(picker, animated: true)
-//        hideResultsView()
     }
 
-//    func showResultsView(delay: TimeInterval = 0.1) {
-//        resultsConstraint.constant = 100
-//        view.layoutIfNeeded()
-//
-//        UIView.animate(withDuration: 0.5,
-//                       delay: delay,
-//                       usingSpringWithDamping: 0.6,
-//                       initialSpringVelocity: 0.6,
-//                       options: .beginFromCurrentState,
-//                       animations: {
-//            self.resultsView.alpha = 1
-//            self.resultsConstraint.constant = -10
-//            self.view.layoutIfNeeded()
-//        },
-//                       completion: nil)
-//    }
-//
-//    func hideResultsView() {
-//        UIView.animate(withDuration: 0.3) {
-//            self.resultsView.alpha = 0
-//        }
-//    }
-
-    func classify(image: UIImage) {
-        guard let ciImage = CIImage(image: image) else {
+    func classify(image: TaggedImage) {
+        guard let ciImage = CIImage(image: image.image) else {
             print("Unable to create CIImage")
             return
         }
 
-        let orientation = CGImagePropertyOrientation(image.imageOrientation)
-
+        let orientation = CGImagePropertyOrientation(image.image.imageOrientation)
+        
+        self.handlingImage = image
         DispatchQueue.global(qos: .userInitiated).async {
             let handler = VNImageRequestHandler(ciImage: ciImage, orientation: orientation)
             do {
@@ -161,19 +159,31 @@ class ViewController: UIViewController {
         DispatchQueue.main.async {
 //        ******Explain the following code in your report******
             if let results = request.results as? [VNClassificationObservation] {
-                if results.isEmpty {
-                    self.resultsLabel.text = "nothing found"
-                } else if results[0].confidence < 0.1 {
-                    self.resultsLabel.text = "not sure"
-                } else {
-                    self.resultsLabel.text = String(format: "%@ %.1f%%", results[0].identifier, results[0].confidence * 100)
+                if !results.isEmpty && results[0].confidence >= 0.1 {
+                    self.handlingImage!.tag = results[0].identifier
+                    self.handlingImage!.confidence = results[0].confidence
+                    if self.handlingImage!.tag != "" && !self.tags.contains(self.handlingImage!.tag) {
+                        self.tags.append(self.handlingImage!.tag)
+                    }
                 }
-            } else if let error = error {
-                self.resultsLabel.text = "error: \(error.localizedDescription)"
             } else {
-                self.resultsLabel.text = "???"
+                return
             }
-//            self.showResultsView()
+        }
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        // Get the new view controller using segue.destination.
+        // Pass the selected object to the new view controller.
+        if segue.identifier == "toTags" {
+            let tagTableController = segue.destination as! TagTableController
+            tagTableController.tags = tags
+            tagTableController.images = images
+        }
+        if segue.identifier == "toDetail" {
+            let detailViewController = segue.destination as! DetailViewController
+            let button = sender as! UIButton
+            detailViewController.image = images[button.tag]
         }
     }
 }
@@ -183,9 +193,10 @@ extension ViewController: UIImagePickerControllerDelegate, UINavigationControlle
         picker.dismiss(animated: true)
 
         let image = info[.originalImage] as! UIImage
-        addButton(image: image)
-        images.append(TaggedImage(image: image))
+        addButton(image: image, buttonTag: images.count)
+        let taggedImage = TaggedImage(image: image)
+        images.append(taggedImage)
         
-//        classify(image: image)
+        classify(image: taggedImage)
     }
 }
