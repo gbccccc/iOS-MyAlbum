@@ -32,148 +32,160 @@ import UIKit
 import CoreML
 import Vision
 
-
+private let reuseIdentifier = "Cell"
 
 class ViewController: UIViewController {
-  
-  @IBOutlet var imageView: UIImageView!
-  @IBOutlet var cameraButton: UIButton!
-  @IBOutlet var photoLibraryButton: UIButton!
-  @IBOutlet var resultsView: UIView!
-  @IBOutlet var resultsLabel: UILabel!
-  @IBOutlet var resultsConstraint: NSLayoutConstraint!
+    
+    var images: [TaggedImage] = []
+    @IBOutlet var verticalStackView: UIStackView!
+    var horizontalStackViews: [UIStackView] = []
+    
+    @IBOutlet var imageView: UIImageView!
+    @IBOutlet var cameraButton: UIButton!
+    @IBOutlet var photoLibraryButton: UIButton!
+    @IBOutlet var resultsView: UIView!
+    @IBOutlet var resultsLabel: UILabel!
+    @IBOutlet var resultsConstraint: NSLayoutConstraint!
 
-  var firstTime = true
+    var firstTime = true
 
-  lazy var classificationRequest: VNCoreMLRequest = {
-    do {
-//      TODO: load mlmodel
-        let classifier = try SnackClassifier(configuration: MLModelConfiguration())
-        let model = try VNCoreMLModel(for: classifier.model)
-        let request = VNCoreMLRequest(model: model, completionHandler: {
-            [weak self] request, error in
-            self?.processObservations(for: request, error: error)
-        })
-        request.imageCropAndScaleOption = .centerCrop
+    lazy var classificationRequest: VNCoreMLRequest = {
+        do {
+//          TODO: load mlmodel
+            let classifier = try SnackClassifier(configuration: MLModelConfiguration())
+            let model = try VNCoreMLModel(for: classifier.model)
+            let request = VNCoreMLRequest(model: model, completionHandler: {
+                [weak self] request, error in
+                self?.processObservations(for: request, error: error)
+            })
+            request.imageCropAndScaleOption = .centerCrop
         
 //        NOTICE:*****VERY IMPORTANT*****
 //        You see Could not create inference context error because Neural Engine is not supported in the simulator.
 //
 //        You can use CPU only for VNRequest in simulator by uncomment the following lines.
-        #if targetEnvironment(simulator)
-           request.usesCPUOnly = true
-        #endif
+            #if targetEnvironment(simulator)
+            request.usesCPUOnly = true
+            #endif
         
-        return request
+            return request
         
         
-    } catch {
-      fatalError("Failed to create VNCoreMLModel: \(error)")
-    }
-  }()
-
-  override func viewDidLoad() {
-    super.viewDidLoad()
-    cameraButton.isEnabled = UIImagePickerController.isSourceTypeAvailable(.camera)
-    resultsView.alpha = 0
-    resultsLabel.text = "choose or take a photo"
-  }
-
-  override func viewDidAppear(_ animated: Bool) {
-    super.viewDidAppear(animated)
-
-    // Show the "choose or take a photo" hint when the app is opened.
-    if firstTime {
-      showResultsView(delay: 0.5)
-      firstTime = false 
-    }
-  }
-  
-  @IBAction func takePicture() {
-    presentPhotoPicker(sourceType: .camera)
-  }
-
-  @IBAction func choosePhoto() {
-    presentPhotoPicker(sourceType: .photoLibrary)
-  }
-
-  func presentPhotoPicker(sourceType: UIImagePickerController.SourceType) {
-    let picker = UIImagePickerController()
-    picker.delegate = self
-    picker.sourceType = sourceType
-    present(picker, animated: true)
-    hideResultsView()
-  }
-
-  func showResultsView(delay: TimeInterval = 0.1) {
-    resultsConstraint.constant = 100
-    view.layoutIfNeeded()
-
-    UIView.animate(withDuration: 0.5,
-                   delay: delay,
-                   usingSpringWithDamping: 0.6,
-                   initialSpringVelocity: 0.6,
-                   options: .beginFromCurrentState,
-                   animations: {
-      self.resultsView.alpha = 1
-      self.resultsConstraint.constant = -10
-      self.view.layoutIfNeeded()
-    },
-    completion: nil)
-  }
-
-  func hideResultsView() {
-    UIView.animate(withDuration: 0.3) {
-      self.resultsView.alpha = 0
-    }
-  }
-
-  func classify(image: UIImage) {
-    guard let ciImage = CIImage(image: image) else {
-      print("Unable to create CIImage")
-      return
-    }
-
-    let orientation = CGImagePropertyOrientation(image.imageOrientation)
-
-    DispatchQueue.global(qos: .userInitiated).async {
-      let handler = VNImageRequestHandler(ciImage: ciImage, orientation: orientation)
-      do {
-        try handler.perform([self.classificationRequest])
-      } catch {
-        print("Failed to perform classification: \(error)")
-      }
-    }
-  }
-
-  func processObservations(for request: VNRequest, error: Error?) {
-    DispatchQueue.main.async {
-//        ******Explain the following code in your report******
-    if let results = request.results as? [VNClassificationObservation] {
-        if results.isEmpty {
-          self.resultsLabel.text = "nothing found"
-        } else if results[0].confidence < 0.1 {
-          self.resultsLabel.text = "not sure"
-        } else {
-          self.resultsLabel.text = String(format: "%@ %.1f%%", results[0].identifier, results[0].confidence * 100)
+        } catch {
+            fatalError("Failed to create VNCoreMLModel: \(error)")
         }
-      } else if let error = error {
-        self.resultsLabel.text = "error: \(error.localizedDescription)"
-      } else {
-        self.resultsLabel.text = "???"
-      }
-      self.showResultsView()
+    }()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
     }
-  }
+    
+    func addButton(image: UIImage) {
+        if images.count % 3 == 0 {
+            let horizontalStackView = UIStackView()
+            verticalStackView.addArrangedSubview(horizontalStackView)
+            horizontalStackView.spacing = 3
+            horizontalStackView.leadingAnchor.constraint(equalTo: verticalStackView.leadingAnchor).isActive = true
+            horizontalStackViews.append(horizontalStackView)
+        }
+        
+        let horizontalStackView = horizontalStackViews.last!
+        let button = UIButton()
+        horizontalStackView.addArrangedSubview(button)
+        let buttonHeight = (verticalStackView.frame.width - 6) / 3
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.widthAnchor.constraint(equalToConstant: buttonHeight).isActive = true
+        button.heightAnchor.constraint(equalToConstant: buttonHeight).isActive = true
+        button.imageView?.contentMode = .scaleAspectFill
+        button.setImage(image, for: .normal)
+    }
+    
+    @IBAction func takePicture() {
+        presentPhotoPicker(sourceType: .camera)
+    }
+
+    @IBAction func choosePhoto() {
+        presentPhotoPicker(sourceType: .photoLibrary)
+    }
+
+    func presentPhotoPicker(sourceType: UIImagePickerController.SourceType) {
+        let picker = UIImagePickerController()
+        picker.delegate = self
+        picker.sourceType = sourceType
+        present(picker, animated: true)
+//        hideResultsView()
+    }
+
+//    func showResultsView(delay: TimeInterval = 0.1) {
+//        resultsConstraint.constant = 100
+//        view.layoutIfNeeded()
+//
+//        UIView.animate(withDuration: 0.5,
+//                       delay: delay,
+//                       usingSpringWithDamping: 0.6,
+//                       initialSpringVelocity: 0.6,
+//                       options: .beginFromCurrentState,
+//                       animations: {
+//            self.resultsView.alpha = 1
+//            self.resultsConstraint.constant = -10
+//            self.view.layoutIfNeeded()
+//        },
+//                       completion: nil)
+//    }
+//
+//    func hideResultsView() {
+//        UIView.animate(withDuration: 0.3) {
+//            self.resultsView.alpha = 0
+//        }
+//    }
+
+    func classify(image: UIImage) {
+        guard let ciImage = CIImage(image: image) else {
+            print("Unable to create CIImage")
+            return
+        }
+
+        let orientation = CGImagePropertyOrientation(image.imageOrientation)
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            let handler = VNImageRequestHandler(ciImage: ciImage, orientation: orientation)
+            do {
+                try handler.perform([self.classificationRequest])
+            } catch {
+                print("Failed to perform classification: \(error)")
+            }
+        }
+    }
+
+    func processObservations(for request: VNRequest, error: Error?) {
+        DispatchQueue.main.async {
+//        ******Explain the following code in your report******
+            if let results = request.results as? [VNClassificationObservation] {
+                if results.isEmpty {
+                    self.resultsLabel.text = "nothing found"
+                } else if results[0].confidence < 0.1 {
+                    self.resultsLabel.text = "not sure"
+                } else {
+                    self.resultsLabel.text = String(format: "%@ %.1f%%", results[0].identifier, results[0].confidence * 100)
+                }
+            } else if let error = error {
+                self.resultsLabel.text = "error: \(error.localizedDescription)"
+            } else {
+                self.resultsLabel.text = "???"
+            }
+//            self.showResultsView()
+        }
+    }
 }
 
 extension ViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-  func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-    picker.dismiss(animated: true)
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        picker.dismiss(animated: true)
 
-    let image = info[.originalImage] as! UIImage
-    imageView.image = image
-
-    classify(image: image)
-  }
+        let image = info[.originalImage] as! UIImage
+        addButton(image: image)
+        images.append(TaggedImage(image: image))
+        
+//        classify(image: image)
+    }
 }

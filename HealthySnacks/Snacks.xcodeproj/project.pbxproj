@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7A2D04B22B674BC900D63007 /* TaggedImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A2D04B12B674BC900D63007 /* TaggedImage.swift */; };
 		7A6CA7282B5BAF8300219821 /* SnackClassifier.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 7A6CA7272B5BAF8300219821 /* SnackClassifier.mlmodel */; };
 		7B11BA832048333700D790AA /* CGImagePropertyOrientation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B11BA822048333700D790AA /* CGImagePropertyOrientation.swift */; };
 		7BF6C660204818EC00606217 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BF6C65F204818EC00606217 /* AppDelegate.swift */; };
@@ -17,6 +18,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		7A2D04B12B674BC900D63007 /* TaggedImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaggedImage.swift; sourceTree = "<group>"; };
 		7A6CA7272B5BAF8300219821 /* SnackClassifier.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = SnackClassifier.mlmodel; sourceTree = "<group>"; };
 		7B11BA822048333700D790AA /* CGImagePropertyOrientation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CGImagePropertyOrientation.swift; sourceTree = "<group>"; };
 		7BF6C65C204818EC00606217 /* HealthySnacks.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HealthySnacks.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -58,6 +60,7 @@
 		7BF6C65E204818EC00606217 /* Snacks */ = {
 			isa = PBXGroup;
 			children = (
+				7A2D04B12B674BC900D63007 /* TaggedImage.swift */,
 				7BF6C65F204818EC00606217 /* AppDelegate.swift */,
 				7BF6C661204818EC00606217 /* ViewController.swift */,
 				7B11BA822048333700D790AA /* CGImagePropertyOrientation.swift */,
@@ -142,6 +145,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7BF6C662204818EC00606217 /* ViewController.swift in Sources */,
+				7A2D04B22B674BC900D63007 /* TaggedImage.swift in Sources */,
 				7BF6C660204818EC00606217 /* AppDelegate.swift in Sources */,
 				7A6CA7282B5BAF8300219821 /* SnackClassifier.mlmodel in Sources */,
 				7B11BA832048333700D790AA /* CGImagePropertyOrientation.swift in Sources */,
