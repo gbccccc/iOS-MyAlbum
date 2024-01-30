@@ -1,24 +1,22 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/t6RI1hiZ)
-# oneMonthHackathon
+# Hackathon
 
-2选1：
+iOS hackathon: MyAlbum.
 
-## 选择1：
+演示视频：https://www.bilibili.com/video/BV1ht421H7UC
 
-运用所学知识，构建一个自己的相册App：MyAlbum
-  -  可通过1)摄像头拍照, 2)加载iOS原生相册App照片的方式将照片添加至MyAlbum App
-  -  加入照片时，利用提供的snacks模型(snacks数据集20分类)进行类型识别，并做**标识**
-  -  可浏览图片(Collection View/Table View选1即可)
-  -  按**标识**的类别自动分类照片，用TableView展示类别信息，点击类别，跳转到下一个view，浏览该类别下的所有图片
-  -  点击图片，跳转到下一个页面，显示单张图片及其信息
+##### 功能简介
 
-## 选择2：
+- 相册列表，可以通过本机相册或相机添加相片
+- 使用 Snacks 模型识别相片并加上标签，并按标签对照片分类
+- 分类界面，可以查看所有带有某一标签的图片
+- 相片详情界面
 
-参考[部署流程](https://llm.mlc.ai/docs/deploy/ios.html)，在iOS/mac设备上成功部署LLM chat app。
-  -  可选：可基于部署流程中的模板app进行自定义修改，增添新功能。
-  
-### 用Markdown编写简单项目文档，并展示运行录屏(录屏需上传方便后续浏览)
-    
-  - 建议录屏上传方式(二选一)
-    - 上传b站，将链接放置/视频嵌入README中
-    - 上传自己的Github仓库，视频嵌入README中
+##### 部分实现细节
+
+偷了个懒，整体基于 iwork4 的代码修改，修改了选择相片后的行为，就不需要再实现一次目标识别的部分了。
+
+相册界面采用 `ScrollView` 和两级 `StackView` 实现，可根据内容数量自适应调整高度；使用按钮作为图片缩略图，点击后会进入图片详情界面。这里本来想用 `CollectionViewController` 的，但实在没搞明白就放弃了。
+
+使用了一个列表存储识别得到过的标签，用于在分类界面生成多个 `TableCellView` 。
+
+相册界面带有一个 `currentTag` 属性，如果值不为 `"All"` ，加载按钮时就仅会加载标签与 `currentTag` 相同的照片，实现相册界面的代码复用。
