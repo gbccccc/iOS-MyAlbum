@@ -83,6 +83,9 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        if currentTag != "All" {
+            self.navigationItem.title = currentTag
+        }
         loadImages()
     }
     
